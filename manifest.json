@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Moodle+",
+  "version": "0.0.1",
+  "description": "Enhances NCSU's WolfWare/Moodle LMS with a unified assignment calendar, grade calculator, dark mode, and a mobile-friendly overlay.",
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "Moodle+"
+  },
+  "background": {
+    "service_worker": "src/background/service-worker.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://wolfware.ncsu.edu/*"],
+      "js": [
+        "src/content-scripts/dashboard-parser.js",
+        "src/content-scripts/course-parser.js",
+        "src/content-scripts/gradebook-parser.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": ["storage"]
+}

@@ -1,0 +1,25 @@
+{
+  "name": "moodle-plus",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Moodle+ — a browser extension that enhances NCSU's WolfWare/Moodle LMS with a unified assignment calendar, grade calculator, dark mode, and a mobile-friendly overlay.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "webextension-polyfill": "^0.12.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.9.0",
+    "eslint": "^9.9.0",
+    "globals": "^15.9.0",
+    "vite": "^8.3.0",
+    "vite-plugin-web-extension": "^4.5.1",
+    "vitest": "^5.0.1"
+  },
+  "license": "MIT"
+}
