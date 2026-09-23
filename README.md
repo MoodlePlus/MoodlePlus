@@ -19,7 +19,7 @@ Moodle+ is a Chrome/Firefox browser extension (Manifest V3) that enhances NCSU's
 ## Clone the repo
 
 ```bash
-git clone https://github.com/ksedai/MoodlePlus.git
+git clone https://github.com/MoodlePlus/MoodlePlus.git
 cd MoodlePlus
 ```
 
