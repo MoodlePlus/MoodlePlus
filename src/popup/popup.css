@@ -70,3 +70,13 @@ input:checked + .slider:before {
 .slider.round:before {
   border-radius: 50%;
 }
+
+/*topbar*/
+.topbar{
+  width: 100%;
+  overflow:auto;
+}
+.topbar div{
+  width: 33%;
+  float: left;
+}
