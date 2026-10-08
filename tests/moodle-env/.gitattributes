@@ -1,0 +1,4 @@
+# Keep Unix line endings even when the repo is cloned on Windows; bash fails on CRLF scripts.
+*.sh  text eol=lf
+*.env text eol=lf
+*.php text eol=lf
