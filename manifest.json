@@ -17,10 +17,11 @@
       "js": [
         "src/content-scripts/dashboard-parser.js",
         "src/content-scripts/course-parser.js",
-        "src/content-scripts/gradebook-parser.js"
+        "src/content-scripts/gradebook-parser.js",
+        "src/content-scripts/dark-mode.js"
       ],
       "run_at": "document_idle"
     }
   ],
-  "permissions": ["storage"]
+  "permissions": ["storage", "scripting", "activeTab"]
 }
