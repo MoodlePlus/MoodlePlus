@@ -8,17 +8,14 @@
     "default_title": "Moodle+"
   },
   "background": {
-    "service_worker": "src/background/service-worker.js",
+    "{{chrome}}.service_worker": "src/background/service-worker.js",
+    "{{firefox}}.scripts": ["src/background/service-worker.js"],
     "type": "module"
   },
   "content_scripts": [
     {
-      "matches": ["*://wolfware.ncsu.edu/*"],
-      "js": [
-        "src/content-scripts/dashboard-parser.js",
-        "src/content-scripts/course-parser.js",
-        "src/content-scripts/gradebook-parser.js"
-      ],
+      "matches": ["*://*.wolfware.ncsu.edu/*"],
+      "js": ["src/content-scripts/main.js"],
       "run_at": "document_idle"
     }
   ],

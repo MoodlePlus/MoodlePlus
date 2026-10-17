@@ -6,7 +6,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:firefox": "vite --mode firefox",
     "build": "vite build",
+    "build:firefox": "vite build --mode firefox",
+    "build:localhost": "vite build --mode localhost",
+    "build:firefox-localhost": "vite build --mode firefox-localhost",
+    "capture-fixtures": "node scripts/capture-fixtures.mjs",
     "lint": "eslint .",
     "test": "vitest run"
   },
@@ -17,6 +22,7 @@
     "@eslint/js": "^9.9.0",
     "eslint": "^9.9.0",
     "globals": "^15.9.0",
+    "jsdom": "^30.1.1",
     "vite": "^8.3.0",
     "vite-plugin-web-extension": "^4.5.1",
     "vitest": "^5.0.1"
