@@ -1,0 +1,190 @@
+<!doctype html>
+<!--
+  HAND-WRITTEN approximation of Moodle 4.5's user grade report, modelled on the local
+  example course (tests/moodle-env/README.md) as seen by student1.
+
+  It is NOT a real capture: class names, cell text for dropped / extra credit items, and
+  row nesting may differ from the real page. Run `npm run capture-fixtures` against the
+  local Moodle instance and make the parser pass on those real pages (see
+  docs/parsing-guide.md). Keep this file for quick unit tests of edge cases.
+-->
+<html lang="en">
+<head><meta charset="utf-8"><title>EX 101: View: User report | Local Moodle</title></head>
+<body id="page-grade-report-user-index" class="format-topics path-grade path-grade-report path-grade-report-user course-2 context-20">
+<div id="region-main">
+<table class="boxaligncenter generaltable user-grade" id="user-grade">
+  <thead>
+    <tr>
+      <th class="header column-itemname" colspan="3">Grade item</th>
+      <th class="header column-weight">Calculated weight</th>
+      <th class="header column-grade">Grade</th>
+      <th class="header column-range">Range</th>
+      <th class="header column-percentage">Percentage</th>
+      <th class="header column-feedback">Feedback</th>
+      <th class="header column-contributiontocoursetotal">Contribution to course total</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><th class="level1 levelodd b1t b2b b1l column-itemname" id="cat_1_3" colspan="9">EX 101 (001) FALL 2026: Example Course for Grade Extension Testing</th></tr>
+
+    <tr><td class="level1 spacer"></td><th class="level2 leveleven b1t b2b b1l column-itemname" id="cat_2_3" colspan="8">Homework</th></tr>
+    <tr>
+      <td class="spacer"></td><td class="spacer"></td>
+      <th class="level3 levelodd item column-itemname" id="row_10_3"><a class="gradeitemheader" href="http://localhost:8000/mod/assign/view.php?id=11"><span class="sr-only">Assignment</span>Homework 1</a></th>
+      <td class="level3 column-weight">12.50 %</td>
+      <td class="level3 column-grade">18.00</td>
+      <td class="level3 column-range">0&ndash;20</td>
+      <td class="level3 column-percentage">90.00 %</td>
+      <td class="level3 column-feedback">&nbsp;</td>
+      <td class="level3 column-contributiontocoursetotal">10.59 %</td>
+    </tr>
+    <tr>
+      <td class="spacer"></td><td class="spacer"></td>
+      <th class="level3 levelodd item column-itemname" id="row_11_3"><a class="gradeitemheader" href="http://localhost:8000/mod/assign/view.php?id=12"><span class="sr-only">Assignment</span>Homework 2</a></th>
+      <td class="level3 column-weight">0.00 %</td>
+      <td class="level3 column-grade dropped">15.00</td>
+      <td class="level3 column-range">0&ndash;20</td>
+      <td class="level3 column-percentage">75.00 %</td>
+      <td class="level3 column-feedback">Show your working next time.</td>
+      <td class="level3 column-contributiontocoursetotal">0.00 %</td>
+    </tr>
+    <tr>
+      <td class="spacer"></td><td class="spacer"></td>
+      <th class="level3 levelodd item column-itemname" id="row_12_3"><a class="gradeitemheader" href="http://localhost:8000/mod/assign/view.php?id=13"><span class="sr-only">Assignment</span>Homework 3</a></th>
+      <td class="level3 column-weight">12.50 %</td>
+      <td class="level3 column-grade">20.00</td>
+      <td class="level3 column-range">0&ndash;20</td>
+      <td class="level3 column-percentage">100.00 %</td>
+      <td class="level3 column-feedback">&nbsp;</td>
+      <td class="level3 column-contributiontocoursetotal">11.76 %</td>
+    </tr>
+    <tr>
+      <td class="spacer"></td><td class="spacer"></td>
+      <th class="level3 levelodd item column-itemname" id="row_13_3"><a class="gradeitemheader" href="http://localhost:8000/mod/assign/view.php?id=14"><span class="sr-only">Assignment</span>Homework 4</a></th>
+      <td class="level3 column-weight">-</td>
+      <td class="level3 column-grade">-</td>
+      <td class="level3 column-range">0&ndash;20</td>
+      <td class="level3 column-percentage">-</td>
+      <td class="level3 column-feedback">&nbsp;</td>
+      <td class="level3 column-contributiontocoursetotal">-</td>
+    </tr>
+    <tr>
+      <td class="spacer"></td><td class="spacer"></td>
+      <th class="level3 levelodd baggb column-itemname" id="row_20_3">Homework total</th>
+      <td class="level3 column-weight">25.00 %</td>
+      <td class="level3 column-grade">38.00</td>
+      <td class="level3 column-range">0&ndash;40</td>
+      <td class="level3 column-percentage">95.00 %</td>
+      <td class="level3 column-feedback">&nbsp;</td>
+      <td class="level3 column-contributiontocoursetotal">22.35 %</td>
+    </tr>
+
+    <tr><td class="level1 spacer"></td><th class="level2 leveleven b1t b2b b1l column-itemname" id="cat_3_3" colspan="8">Quizzes</th></tr>
+    <tr>
+      <td class="spacer"></td><td class="spacer"></td>
+      <th class="level3 levelodd item column-itemname" id="row_14_3"><a class="gradeitemheader" href="http://localhost:8000/mod/quiz/view.php?id=15"><span class="sr-only">Quiz</span>Quiz 1</a></th>
+      <td class="level3 column-weight">7.50 %</td>
+      <td class="level3 column-grade">6.67</td>
+      <td class="level3 column-range">0&ndash;10</td>
+      <td class="level3 column-percentage">66.67 %</td>
+      <td class="level3 column-feedback">&nbsp;</td>
+      <td class="level3 column-contributiontocoursetotal">3.92 %</td>
+    </tr>
+    <tr>
+      <td class="spacer"></td><td class="spacer"></td>
+      <th class="level3 levelodd item column-itemname" id="row_15_3"><a class="gradeitemheader" href="http://localhost:8000/mod/quiz/view.php?id=16"><span class="sr-only">Quiz</span>Quiz 2</a></th>
+      <td class="level3 column-weight">7.50 %</td>
+      <td class="level3 column-grade">10.00</td>
+      <td class="level3 column-range">0&ndash;10</td>
+      <td class="level3 column-percentage">100.00 %</td>
+      <td class="level3 column-feedback">&nbsp;</td>
+      <td class="level3 column-contributiontocoursetotal">5.88 %</td>
+    </tr>
+    <tr>
+      <td class="spacer"></td><td class="spacer"></td>
+      <th class="level3 levelodd item column-itemname" id="row_16_3"><a class="gradeitemheader" href="http://localhost:8000/mod/quiz/view.php?id=17"><span class="sr-only">Quiz</span>Quiz 3</a></th>
+      <td class="level3 column-weight">-</td>
+      <td class="level3 column-grade">-</td>
+      <td class="level3 column-range">0&ndash;10</td>
+      <td class="level3 column-percentage">-</td>
+      <td class="level3 column-feedback">&nbsp;</td>
+      <td class="level3 column-contributiontocoursetotal">-</td>
+    </tr>
+    <tr>
+      <td class="spacer"></td><td class="spacer"></td>
+      <th class="level3 levelodd baggb column-itemname" id="row_21_3">Quizzes total</th>
+      <td class="level3 column-weight">15.00 %</td>
+      <td class="level3 column-grade">16.67</td>
+      <td class="level3 column-range">0&ndash;20</td>
+      <td class="level3 column-percentage">83.35 %</td>
+      <td class="level3 column-feedback">&nbsp;</td>
+      <td class="level3 column-contributiontocoursetotal">9.80 %</td>
+    </tr>
+
+    <tr><td class="level1 spacer"></td><th class="level2 leveleven b1t b2b b1l column-itemname" id="cat_4_3" colspan="8">Exams</th></tr>
+    <tr>
+      <td class="spacer"></td><td class="spacer"></td>
+      <th class="level3 levelodd item column-itemname" id="row_17_3"><a class="gradeitemheader" href="http://localhost:8000/mod/assign/view.php?id=18"><span class="sr-only">Assignment</span>Midterm Exam</a></th>
+      <td class="level3 column-weight">45.00 %</td>
+      <td class="level3 column-grade">82.00</td>
+      <td class="level3 column-range">0&ndash;100</td>
+      <td class="level3 column-percentage">82.00 %</td>
+      <td class="level3 column-feedback">Good job on part B.</td>
+      <td class="level3 column-contributiontocoursetotal">48.24 %</td>
+    </tr>
+    <tr>
+      <td class="spacer"></td><td class="spacer"></td>
+      <th class="level3 levelodd item column-itemname" id="row_18_3"><a class="gradeitemheader" href="http://localhost:8000/mod/assign/view.php?id=19"><span class="sr-only">Assignment</span>Final Exam</a></th>
+      <td class="level3 column-weight">-</td>
+      <td class="level3 column-grade">-</td>
+      <td class="level3 column-range">0&ndash;100</td>
+      <td class="level3 column-percentage">-</td>
+      <td class="level3 column-feedback">&nbsp;</td>
+      <td class="level3 column-contributiontocoursetotal">-</td>
+    </tr>
+    <tr>
+      <td class="spacer"></td><td class="spacer"></td>
+      <th class="level3 levelodd baggb column-itemname" id="row_22_3">Exams total</th>
+      <td class="level3 column-weight">45.00 %</td>
+      <td class="level3 column-grade">82.00</td>
+      <td class="level3 column-range">0&ndash;100</td>
+      <td class="level3 column-percentage">82.00 %</td>
+      <td class="level3 column-feedback">&nbsp;</td>
+      <td class="level3 column-contributiontocoursetotal">48.24 %</td>
+    </tr>
+
+    <tr>
+      <td class="level1 spacer"></td>
+      <th class="level2 leveleven item column-itemname" id="row_23_3" colspan="2"><span class="gradeitemheader">Participation</span></th>
+      <td class="level2 column-weight">15.00 %</td>
+      <td class="level2 column-grade">9.00</td>
+      <td class="level2 column-range">0&ndash;10</td>
+      <td class="level2 column-percentage">90.00 %</td>
+      <td class="level2 column-feedback">&nbsp;</td>
+      <td class="level2 column-contributiontocoursetotal">5.29 %</td>
+    </tr>
+    <tr>
+      <td class="level1 spacer"></td>
+      <th class="level2 leveleven item column-itemname" id="row_24_3" colspan="2"><span class="gradeitemheader">Extra Credit: Course Survey</span></th>
+      <td class="level2 column-weight">Extra credit</td>
+      <td class="level2 column-grade">2.00</td>
+      <td class="level2 column-range">0&ndash;2</td>
+      <td class="level2 column-percentage">100.00 %</td>
+      <td class="level2 column-feedback">&nbsp;</td>
+      <td class="level2 column-contributiontocoursetotal">1.18 %</td>
+    </tr>
+    <tr>
+      <td class="level1 spacer"></td>
+      <th class="level2 leveleven baggb column-itemname" id="row_25_3" colspan="2">Course total</th>
+      <td class="level2 column-weight">-</td>
+      <td class="level2 column-grade">149.31</td>
+      <td class="level2 column-range">0&ndash;300</td>
+      <td class="level2 column-percentage">87.83 %</td>
+      <td class="level2 column-feedback">&nbsp;</td>
+      <td class="level2 column-contributiontocoursetotal">-</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</body>
+</html>

@@ -143,8 +143,9 @@ Log in as `student1` first. The course id is printed by the seed; it is `2` on a
 - User report, one course: <http://localhost:8000/grade/report/user/index.php?id=2>
 - Course page: <http://localhost:8000/course/view.php?id=2>
 
-In the extension's `manifest.json`, add `http://localhost:8000/*` next to the NC State match pattern in
-`content_scripts[].matches` and/or `host_permissions`, e.g. `https://*.wolfware.ncsu.edu/*`.
+The extension's dev builds (`npm run dev`, `npm run build:localhost`) already run the content scripts on
+`http://localhost:8000/*`; see `vite.config.js`. To save these pages as parser test fixtures, run
+`npm run capture-fixtures` (see `docs/parsing-guide.md`).
 Your Windows browser reaches `localhost:8000` directly, because Docker Desktop forwards the port.
 
 ## 5. Folder layout

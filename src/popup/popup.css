@@ -1,15 +1,46 @@
+/* Theme colours. All text and control colours meet WCAG AA contrast (NFR-7)
+   against their background in both themes. */
+:root {
+  --bg: #ffffff;
+  --text: #1f2328;
+  --switch-off: #767676;
+  --switch-on: #0b63c4;
+  --switch-thumb: #ffffff;
+  color-scheme: light;
+}
+
+body.dark {
+  --bg: #1e1f22;
+  --text: #e6e6e6;
+  --switch-off: #767676;
+  --switch-on: #4c9aff;
+  --switch-thumb: #ffffff;
+  color-scheme: dark;
+}
+
 body {
   width: 320px;
   min-height: 200px;
   margin: 0;
   font-family: system-ui, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
 }
 
 #app {
   padding: 16px;
 }
 
+#topbar {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
 
+#topbar h1 {
+  margin: 0;
+}
 
 /*dark mode toggle switch*/
 /*https://www.w3schools.com/howto/howto_css_switch.asp*/
@@ -19,7 +50,6 @@ body {
   display: inline-block;
   width: 50px;
   height: 30px;
-  margin-top:15px;
 }
 
 .switch input {
@@ -35,8 +65,7 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #ccc;
-  -webkit-transition: .4s;
+  background-color: var(--switch-off);
   transition: .4s;
 }
 
@@ -47,22 +76,20 @@ body {
   width: 20px;
   left: 4px;
   bottom: 5px;
-  background-color: white;
-  -webkit-transition: .4s;
+  background-color: var(--switch-thumb);
   transition: .4s;
 }
 
 input:checked + .slider {
-  background-color: #2196F3;
+  background-color: var(--switch-on);
 }
 
-input:focus + .slider {
-  box-shadow: 0 0 1px #2196F3;
+input:focus-visible + .slider {
+  outline: 2px solid var(--switch-on);
+  outline-offset: 2px;
 }
 
 input:checked + .slider:before {
-  -webkit-transform: translateX(22px);
-  -ms-transform: translateX(22px);
   transform: translateX(22px);
 }
 
@@ -72,9 +99,4 @@ input:checked + .slider:before {
 
 .slider.round:before {
   border-radius: 50%;
-}
-
-#topbar{
-  display: grid;
-  grid-template-columns: 80% 20%;
 }
