@@ -1,41 +1,72 @@
 // Parser for upcoming events: /calendar/view.php?view=upcoming (FR-2).
 //
 // Lists upcoming due dates across all of the student's courses, which is exactly what
-// the unified calendar needs.
+// the unified calendar needs. NOTE: this is Moodle's "upcoming" window (a near-term
+// lookahead, not "every future event") - on the example course, Homework 4 and the Quiz 3
+// close event show up here, but the Final Exam (60 days out) does not. That's a real limit
+// of this page, not a parser bug; a true "every assignment" view would need a different
+// source (e.g. each course's own calendar/assignment index) - out of scope for now.
 //
-// ---------------------------------------------------------------------------------------
-// TODO(Divy): implement this after parseGradesOverview. Suggested steps:
-//
-//   1. Open http://localhost:8000/calendar/view.php?view=upcoming as student1. Homework 4,
-//      Quiz 3 and the Final Exam should be listed. Inspect one event in DevTools.
-//   2. Moodle's calendar templates use data attributes, which are the most stable
-//      selectors. Look for things like [data-region="event-item"] and data-event-id, and
-//      prefer them over class names.
-//   3. For each event, read:
-//        assignmentId - data-event-id (or the activity link's "id" parameter)
-//        title        - the event name
-//        courseId     - from the course link in the event (numberParamFromUrl(..., 'id'))
-//        dueDate      - DON'T parse the display text ("Friday, 24 October, 11:59 PM").
-//                       Day links like calendar/view.php?view=day&time=1729814340 carry
-//                       a Unix timestamp; look for one (or a data-* timestamp) instead.
-//                       Store it as an ISO string: new Date(seconds * 1000).toISOString()
-//        url          - the activity link's absolute href
-//   4. Return fail("...") if the event list container is missing. An empty list is only
-//      success if the page shows Moodle's "no upcoming events" message.
-//   5. Enable the tests in calendarUpcoming.test.js and make them pass.
+// Each event is a <div data-type="event" data-course-id="…" data-event-id="…" …>; the
+// course id and event id are read straight off those attributes (most stable: Design doc
+// 3.2 rule 1), rather than re-deriving them from links inside the card.
 //
 // Output shape (Design doc 3.1 "Assignment"; category/pointsPossible/status can come later):
-//   [{ assignmentId: "42", courseId: 2, title: "Homework 4", dueDate: "2026-10-24T03:59:00.000Z", url: "http://..." }]
-// ---------------------------------------------------------------------------------------
+//   [{ assignmentId: "42", courseId: 2, title: "Homework 4 is due", dueDate: "2026-10-24T03:59:00.000Z", url: "http://..." }]
 
-// Uncomment as you use them:
-// import { cleanText, numberParamFromUrl, queryAllFirst, queryFirst } from '../dom.js';
-import { fail } from '../result.js';
+import { cleanText, numberParamFromUrl, queryFirst } from '../dom.js';
+import { fail, ok } from '../result.js';
+
+const CONTAINER_SELECTORS = ['[data-region="calendar"]', '#region-main'];
+const EVENT_SELECTOR = '[data-type="event"][data-event-id]';
+const NO_EVENTS_PATTERN = /no (upcoming )?events/i;
 
 /**
- * @param {Document} _doc
- * @returns {{ ok: true, data: object[], warnings: string[] } | { ok: false, reason: string }}
+ * @param {Document} doc
+ * @returns {{ ok: true, data: { assignmentId: string, courseId: number, title: string, dueDate: string, url: string|null }[], warnings: string[] }
+ *         | { ok: false, reason: string }}
  */
-export function parseCalendarUpcoming(_doc) {
-  return fail('Upcoming events parser not implemented yet.');
+export function parseCalendarUpcoming(doc) {
+  const container = queryFirst(doc, CONTAINER_SELECTORS);
+  if (!container) return fail("Couldn't find the calendar on this page.");
+
+  const eventEls = [...container.querySelectorAll(EVENT_SELECTOR)];
+  if (eventEls.length === 0) {
+    if (NO_EVENTS_PATTERN.test(cleanText(container))) return ok([], []);
+    return fail("Couldn't find any upcoming events on this page.");
+  }
+
+  const warnings = [];
+  const events = [];
+
+  for (const el of eventEls) {
+    const assignmentId = el.getAttribute('data-event-id');
+    const courseLink = () => queryFirst(el, ['a[href*="course/view.php"]']);
+    const courseId = el.hasAttribute('data-course-id')
+      ? Number(el.getAttribute('data-course-id'))
+      : numberParamFromUrl(courseLink()?.getAttribute('href'), 'id');
+
+    const title = cleanText(queryFirst(el, ['.name', 'h3'])) || el.getAttribute('data-event-title') || '';
+    const timeLink = queryFirst(el, ['a[href*="view=day"]']);
+    const seconds = numberParamFromUrl(timeLink?.getAttribute('href'), 'time');
+
+    if (!assignmentId || !Number.isFinite(courseId) || seconds === null || !title) {
+      warnings.push(`Skipped an event we couldn't fully read (title "${title || assignmentId}").`);
+      continue;
+    }
+
+    const activityLink = queryFirst(el, ['.description-content a.autolink', '.description-content a[href]']);
+
+    events.push({
+      assignmentId: String(assignmentId),
+      courseId,
+      title,
+      dueDate: new Date(seconds * 1000).toISOString(),
+      url: activityLink?.href ?? null,
+    });
+  }
+
+  if (events.length === 0) return fail('Found event cards but could not read any of them.');
+
+  return ok(events, warnings);
 }

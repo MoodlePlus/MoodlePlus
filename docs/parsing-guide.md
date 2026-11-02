@@ -32,18 +32,27 @@ loading the extension.
 | [`src/parsing/dom.js`](../src/parsing/dom.js) | Done. `queryFirst` (try selectors in order), `cleanText`, `numberParamFromUrl` |
 | [`src/parsing/numbers.js`](../src/parsing/numbers.js) | Done. `parseGrade("-")` → `null`, `parseGrade("0.00")` → `0`, `parsePercent`, `parseRange` |
 | [`src/parsing/pageType.js`](../src/parsing/pageType.js) | Done. Detects the page from Moodle's `<body id="page-…">` and reads the course id |
-| [`src/parsing/parsers/userReport.js`](../src/parsing/parsers/userReport.js) | **Written, needs checking against the real page** (task 1) |
-| [`src/parsing/parsers/gradesOverview.js`](../src/parsing/parsers/gradesOverview.js) | **Yours** (task 2). Skeleton with step-by-step TODOs |
-| [`src/parsing/parsers/calendarUpcoming.js`](../src/parsing/parsers/calendarUpcoming.js) | **Yours** (task 3). Skeleton with step-by-step TODOs |
+| [`src/parsing/parsers/userReport.js`](../src/parsing/parsers/userReport.js) | Done. Checked against real pages for all 3 students (task 1) |
+| [`src/parsing/parsers/gradesOverview.js`](../src/parsing/parsers/gradesOverview.js) | Done. Checked against the real page (task 2) |
+| [`src/parsing/parsers/calendarUpcoming.js`](../src/parsing/parsers/calendarUpcoming.js) | Done. Checked against the real page (task 3) |
 | [`src/content-scripts/main.js`](../src/content-scripts/main.js) | Done. Already wired to all three parsers and storage |
 | [`src/storage/courseCache.js`](../src/storage/courseCache.js) | Done. `saveCourseData`, `saveCourseList`, `saveParseStatus` |
 | [`scripts/capture-fixtures.mjs`](../scripts/capture-fixtures.mjs) | Done. Saves real pages from the local Moodle for tests |
 
-The user report parser was written against a **hand-written** copy of the page
+The user report parser was originally written against a **hand-written** copy of the page
 ([`tests/fixtures/handmade/user-report.html`](../tests/fixtures/handmade/user-report.html)),
-because the real site wasn't available when it was written. Its logic is tested, but class
-names may not match the real page exactly. Checking that is task 1, and it's a good way to learn
-how the code works before writing your own parser.
+because the real site wasn't available when it was written; that fixture is kept as a fast,
+deterministic test that doesn't need the local Moodle running. All three parsers now also have
+passing tests against real captured pages for student1-3 (`describe.skipIf` blocks, gated on
+`tests/fixtures/moodle/` existing).
+
+## Next: popup UI
+
+The parsing layer feeds a popup UI built on top of it (calendar + grade calculator tabs,
+`src/popup/views/`), reading only from `courseCache`/`userSettings` - never from the page
+directly. See `src/popup/views/calendarView.js` and `calculatorView.js` for the pattern if you're
+adding another view, and `src/utils/calendarAgenda.js` / `gradeCalculatorOptions.js` for the pure
+logic behind them (both unit-tested with no DOM, same style as `gradeCalculator.js`).
 
 ## Setup (about 15 minutes)
 
@@ -57,6 +66,11 @@ how the code works before writing your own parser.
    ```bash
    npm run capture-fixtures
    ```
+   **Due dates are relative to when the site was last seeded, not when you capture.** If your
+   local Moodle has been sitting around for a while, Homework 4 / Quiz 3 may have aged out of
+   the "upcoming events" window (or already be overdue) by the time you capture - the page will
+   genuinely show fewer events, which is correct behavior, not a parser bug. Run
+   `./moodle.sh reset` first if you want fixtures with the due dates fresh again.
 3. Run the tests. Tests for the real pages are skipped until step 2 has run; now they run too:
    ```bash
    npm test

@@ -22,7 +22,19 @@
           </label>
         </div>
       </div>
-      
+
+      <nav id="tabs" role="tablist" aria-label="Moodle+ views">
+        <button type="button" class="tab" id="tab-calendar" role="tab"
+                aria-selected="true" aria-controls="view-calendar">Calendar</button>
+        <button type="button" class="tab" id="tab-calculator" role="tab"
+                aria-selected="false" aria-controls="view-calculator" tabindex="-1">Grade Calculator</button>
+      </nav>
+
+      <main id="views">
+        <section id="view-calendar" class="view" role="tabpanel" aria-labelledby="tab-calendar"></section>
+        <section id="view-calculator" class="view" role="tabpanel" aria-labelledby="tab-calculator" hidden></section>
+      </main>
+
     </div>
     <script type="module" src="popup.js"></script>
   </body>
