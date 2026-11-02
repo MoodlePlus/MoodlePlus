@@ -34,3 +34,18 @@ export async function setMany(items) {
 export async function remove(keys) {
   return browser.storage.local.remove(keys);
 }
+
+/**
+ * Subscribes to local storage writes from any context (popup, content script,
+ * background) - e.g. a dark-mode toggle flipped in the popup reaching an
+ * already-open WolfWare tab without any messaging. Returns an unsubscribe function.
+ * @param {(changes: Record<string, browser.Storage.StorageChange>) => void} callback
+ * @returns {() => void}
+ */
+export function onChanged(callback) {
+  const listener = (changes, areaName) => {
+    if (areaName === 'local') callback(changes);
+  };
+  browser.storage.onChanged.addListener(listener);
+  return () => browser.storage.onChanged.removeListener(listener);
+}

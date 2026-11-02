@@ -15,7 +15,12 @@
   "content_scripts": [
     {
       "matches": ["*://*.wolfware.ncsu.edu/*"],
-      "js": ["src/content-scripts/main.js"],
+      "js": ["src/content-scripts/pageDarkMode.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["*://*.wolfware.ncsu.edu/*"],
+      "js": ["src/content-scripts/main.js", "src/content-scripts/overlay.js"],
       "run_at": "document_idle"
     }
   ],
