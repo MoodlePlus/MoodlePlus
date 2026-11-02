@@ -3,10 +3,8 @@
   HAND-WRITTEN approximation of Moodle 4.5's user grade report, modelled on the local
   example course (tests/moodle-env/README.md) as seen by student1.
 
-  It is NOT a real capture: class names, cell text for dropped / extra credit items, and
-  row nesting may differ from the real page. Run `npm run capture-fixtures` against the
-  local Moodle instance and make the parser pass on those real pages (see
-  docs/parsing-guide.md). Keep this file for quick unit tests of edge cases.
+  Simplified to match the captured report: totals use their category header level,
+  and item names sit below activity-type labels. Keep this file for quick unit tests.
 -->
 <html lang="en">
 <head><meta charset="utf-8"><title>EX 101: View: User report | Local Moodle</title></head>
@@ -30,7 +28,7 @@
     <tr><td class="level1 spacer"></td><th class="level2 leveleven b1t b2b b1l column-itemname" id="cat_2_3" colspan="8">Homework</th></tr>
     <tr>
       <td class="spacer"></td><td class="spacer"></td>
-      <th class="level3 levelodd item column-itemname" id="row_10_3"><a class="gradeitemheader" href="http://localhost:8000/mod/assign/view.php?id=11"><span class="sr-only">Assignment</span>Homework 1</a></th>
+      <th class="level3 levelodd item column-itemname" id="row_10_3"><span class="d-block text-uppercase small">Assignment</span><a class="gradeitemheader" href="http://localhost:8000/mod/assign/view.php?id=11">Homework 1</a></th>
       <td class="level3 column-weight">12.50 %</td>
       <td class="level3 column-grade">18.00</td>
       <td class="level3 column-range">0&ndash;20</td>
@@ -70,7 +68,7 @@
     </tr>
     <tr>
       <td class="spacer"></td><td class="spacer"></td>
-      <th class="level3 levelodd baggb column-itemname" id="row_20_3">Homework total</th>
+      <th class="level2 leveleven baggt column-itemname" id="row_20_3">Homework total</th>
       <td class="level3 column-weight">25.00 %</td>
       <td class="level3 column-grade">38.00</td>
       <td class="level3 column-range">0&ndash;40</td>
@@ -112,7 +110,7 @@
     </tr>
     <tr>
       <td class="spacer"></td><td class="spacer"></td>
-      <th class="level3 levelodd baggb column-itemname" id="row_21_3">Quizzes total</th>
+      <th class="level2 leveleven baggt column-itemname" id="row_21_3">Quizzes total</th>
       <td class="level3 column-weight">15.00 %</td>
       <td class="level3 column-grade">16.67</td>
       <td class="level3 column-range">0&ndash;20</td>
@@ -144,7 +142,7 @@
     </tr>
     <tr>
       <td class="spacer"></td><td class="spacer"></td>
-      <th class="level3 levelodd baggb column-itemname" id="row_22_3">Exams total</th>
+      <th class="level2 leveleven baggt column-itemname" id="row_22_3">Exams total</th>
       <td class="level3 column-weight">45.00 %</td>
       <td class="level3 column-grade">82.00</td>
       <td class="level3 column-range">0&ndash;100</td>
@@ -175,7 +173,7 @@
     </tr>
     <tr>
       <td class="level1 spacer"></td>
-      <th class="level2 leveleven baggb column-itemname" id="row_25_3" colspan="2">Course total</th>
+      <th class="level1 levelodd baggt column-itemname" id="row_25_3" colspan="2">Course total</th>
       <td class="level2 column-weight">-</td>
       <td class="level2 column-grade">149.31</td>
       <td class="level2 column-range">0&ndash;300</td>

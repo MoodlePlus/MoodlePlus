@@ -26,7 +26,7 @@ describe('parseUserReport (hand-written fixture)', () => {
     expect(homework4.scorePercent).toBeNull();
   });
 
-  it('strips screen-reader text from item names', () => {
+  it('reads item names without activity-type labels', () => {
     expect(byName('Homework').items[0].name).toBe('Homework 1');
   });
 
@@ -92,6 +92,21 @@ for (const { student, currentGrade, courseTotal } of REAL_PAGES) {
       const result = parseUserReport(loadFixture(fixture), { courseId: 2 });
       if (!result.ok) throw new Error(result.reason);
 
+      expect(result.warnings).toEqual([]);
+      expect(result.data.categories.map(({ name, weightPercent }) => [name, weightPercent])).toEqual([
+        ['Homework', 25],
+        ['Quizzes', 15],
+        ['Exams', 45],
+        ['Participation', 15],
+        // Moodle marks the ungraded survey as Empty, without an Extra credit marker.
+        ...(student === 'student2' ? [['Extra Credit: Course Survey', 0]] : []),
+      ]);
+      expect(result.data.categories[0].dropLowestCount).toBe(1);
+      expect(result.data.categories[0].items[0].name).toBe('Homework 1');
+      expect(result.data.categories[0].items.find(({ name }) => name === 'Homework 4').scorePercent).toBeNull();
+      expect(result.data.extraCreditItems.map(({ name }) => name)).toEqual(
+        student === 'student2' ? [] : ['Extra Credit: Course Survey'],
+      );
       expect(result.data.courseTotalPercent).toBeCloseTo(courseTotal, 1);
       expect(calculateCurrentGrade(result.data.categories)).toBeCloseTo(currentGrade, 1);
     });

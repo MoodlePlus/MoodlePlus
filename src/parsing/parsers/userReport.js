@@ -52,13 +52,17 @@ export function parseUserReport(doc, { courseId = null } = {}) {
     const level = levelOf(nameCell);
     if (level === null) return fail(`Couldn't tell how "${cleanText(nameCell)}" is nested.`);
 
-    const name = cleanText(nameCell);
+    const name = cleanText(nameCell.querySelector('.gradeitemheader') ?? nameCell);
     const gradeCell = row.querySelector('.column-grade');
+    const isTotal = isTotalRow(nameCell, name);
 
     // A row at level N closes every category at level N or deeper. What's left on top of
-    // the stack is the row's parent. (A category's items and its total row sit one level
-    // deeper than the category header.)
-    while (stack.length > 0 && stack.at(-1).level >= level) stack.pop();
+    // the stack is the row's parent. Moodle totals sit at their category's level;
+    // keep that category on the stack for its total row.
+    while (
+      stack.length > 0 &&
+      (stack.at(-1).level > level || (!isTotal && stack.at(-1).level === level))
+    ) stack.pop();
     const parent = stack.at(-1);
 
     if (!gradeCell) {
@@ -78,7 +82,7 @@ export function parseUserReport(doc, { courseId = null } = {}) {
 
     if (!parent) return fail(`Found "${name}" outside of any category.`);
 
-    if (isTotalRow(nameCell, name)) {
+    if (isTotal) {
       if (parent.isCourse) {
         // Use Moodle's percentage, not grade / range: the range shows the course's full
         // maximum, but Moodle leaves ungraded items out of the percentage.
@@ -129,8 +133,6 @@ function parseItemRow(row, nameCell, name) {
 
   const link = nameCell.querySelector('a[href]');
   const weightPercent = parsePercent(weightText);
-  // TODO(verify): check these markers against a real page that has dropped and extra
-  // credit items (the example course has both - see tests/moodle-env/README.md).
   const isExtraCredit = /extra credit/i.test(weightText);
   const isDropped =
     row.querySelector('.dropped') !== null ||
