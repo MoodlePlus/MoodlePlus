@@ -53,16 +53,18 @@ export async function initCalendarView(root) {
   // render() itself can stay synchronous when the view mode changes.
   let emptyHelp = null;
   if (state === 'no-courses') {
-    emptyHelp = await buildEmptyStateWithLinks("Moodle+ hasn't seen your courses yet. Open these once:", [
-      'upcomingEvents',
-      'gradesOverview',
-    ]);
+    emptyHelp = await buildEmptyStateWithLinks(
+      "Moodle+ hasn't seen your courses yet.",
+      ['upcomingEvents', 'gradesOverview'],
+      'Open these once:',
+    );
   } else if (state === 'no-assignments') {
     emptyHelp = await buildEmptyStateWithLinks(
       noAssignmentsReason
         ? `Couldn't read the upcoming events page: ${noAssignmentsReason}`
-        : 'No due dates loaded yet. Open this once:',
+        : 'No due dates loaded yet.',
       ['upcomingEvents'],
+      'Open this once:',
     );
   }
 

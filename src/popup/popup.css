@@ -73,6 +73,19 @@ body {
   font-size: 1.1rem;
 }
 
+.toggle-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toggle-label {
+  font-size: 0.85rem;
+  color: var(--muted-text);
+  cursor: pointer;
+  user-select: none;
+}
+
 #tabs {
   flex: 0 0 auto;
   display: flex;
@@ -163,6 +176,18 @@ body {
   text-decoration: underline;
 }
 
+.course-grade-links p {
+  margin: 0 0 8px;
+}
+
+.more-courses {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--muted-text);
+}
+
 .field {
   margin-bottom: 10px;
 }
@@ -247,10 +272,21 @@ body {
 
 /* Grade calculator view */
 
+.course-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+
+.current-grade-label {
+  font-size: 0.8rem;
+  color: var(--muted-text);
+}
+
 .current-grade {
   font-size: 1.4rem;
   font-weight: 600;
-  margin: 4px 0 12px;
+  margin: 2px 0 12px;
 }
 
 .result-panel {

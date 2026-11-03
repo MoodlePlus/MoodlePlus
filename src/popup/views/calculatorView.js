@@ -4,7 +4,7 @@
 // filtering/labelling helpers live in src/utils/gradeCalculatorOptions.js.
 
 import { COURSE_DATA_KINDS, getCourseData, getCourseList } from '../../storage/courseCache.js';
-import { buildEmptyStateWithLinks } from './pageLinks.js';
+import { buildCourseGradeLinks, buildEmptyStateWithLinks } from './pageLinks.js';
 import { calculateCurrentGrade, calculateRequiredScore } from '../../utils/gradeCalculator.js';
 import {
   formatCategoryOptionLabel,
@@ -22,8 +22,11 @@ export async function initCalculatorView(root) {
   let selectedCategoryId = null;
   let targetGradeInput = '';
 
+  let knownCourses = [];
+
   try {
     const courseList = await getCourseList();
+    knownCourses = courseList?.data ?? [];
     if (courseList) {
       const entries = await Promise.all(
         courseList.data.map(async (course) => {
@@ -47,13 +50,26 @@ export async function initCalculatorView(root) {
 
   selectedCourseId = gradesByCourseId.keys().next().value ?? null;
 
-  const emptyHelp =
-    !loadError && gradesByCourseId.size === 0
-      ? await buildEmptyStateWithLinks(
-          "No grades loaded yet. Open a course's Grades page once — you can get to each one from here:",
-          ['gradesOverview'],
-        )
-      : null;
+  // Courses we know about but haven't read a grade report for yet - linked straight to
+  // their grade report, the one page the calculator can use.
+  const unloadedCourses = knownCourses.filter((course) => !gradesByCourseId.has(course.courseId));
+
+  let emptyHelp = null;
+  let moreCourses = null;
+  if (!loadError && gradesByCourseId.size === 0) {
+    emptyHelp =
+      unloadedCourses.length > 0
+        ? await buildCourseGradeLinks("No grades loaded yet. Open a course's grades once to use it here:", unloadedCourses)
+        : await buildEmptyStateWithLinks(
+            "No grades loaded yet. Open a course's Grades page once.",
+            ['gradesOverview'],
+            'You can get to each course from here:',
+          );
+    emptyHelp.classList.add('empty-state');
+  } else if (!loadError && unloadedCourses.length > 0) {
+    moreCourses = await buildCourseGradeLinks('Add another course (opens its grades):', unloadedCourses);
+    moreCourses.classList.add('more-courses');
+  }
 
   render();
 
@@ -74,6 +90,11 @@ export async function initCalculatorView(root) {
 
     if (gradesByCourseId.size > 1) {
       root.appendChild(buildCourseField());
+    } else {
+      const name = document.createElement('div');
+      name.className = 'course-name';
+      name.textContent = course.courseName;
+      root.appendChild(name);
     }
 
     if (course.isStale) {
@@ -81,6 +102,11 @@ export async function initCalculatorView(root) {
     }
 
     const currentGrade = calculateCurrentGrade(course.report.categories);
+    const currentGradeLabel = document.createElement('div');
+    currentGradeLabel.className = 'current-grade-label';
+    currentGradeLabel.textContent = 'Current grade';
+    root.appendChild(currentGradeLabel);
+
     const currentGradeEl = document.createElement('div');
     currentGradeEl.className = 'current-grade';
     currentGradeEl.textContent = currentGrade === null ? 'Not enough graded work yet' : `${currentGrade.toFixed(2)}%`;
@@ -89,6 +115,7 @@ export async function initCalculatorView(root) {
     const solvable = getSolvableCategories(course.report.categories);
     if (solvable.length === 0) {
       root.appendChild(emptyState('Every category already has a grade — nothing left to solve for.'));
+      if (moreCourses) root.appendChild(moreCourses);
       return;
     }
 
@@ -103,6 +130,8 @@ export async function initCalculatorView(root) {
     resultContainer.id = 'calc-result';
     root.appendChild(resultContainer);
     updateResult(course, resultContainer);
+
+    if (moreCourses) root.appendChild(moreCourses);
   }
 
   // Only this container is rebuilt while the user types a target grade, so the number

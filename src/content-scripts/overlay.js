@@ -71,9 +71,10 @@ const PANEL_MARKUP = `
   <div id="app">
     <div id="topbar">
       <div><h1>Moodle+</h1></div>
-      <div>
+      <div class="toggle-group">
+        <label for="dark-mode-toggle" class="toggle-label">Dark mode</label>
         <label class="switch">
-          <input type="checkbox" id="dark-mode-toggle" role="switch" aria-label="Dark mode">
+          <input type="checkbox" id="dark-mode-toggle" role="switch">
           <span class="slider round"></span>
         </label>
       </div>
