@@ -62,4 +62,11 @@ describe.skipIf(!fixtureExists(fixture))('parseCalendarUpcoming (real page, stud
     expect(quiz3.assignmentId).toBe('12');
     expect(quiz3.url).toContain('/mod/quiz/view.php?id=');
   });
+
+  it('names each event\'s course, so the calendar works before the grades overview is visited', () => {
+    for (const event of result.data) {
+      expect(event.courseName).toBe('EX 101 (001) FALL 2026: Example Course for Grade Extension Testing');
+      expect(event.courseUrl).toContain('/course/view.php?id=2');
+    }
+  });
 });

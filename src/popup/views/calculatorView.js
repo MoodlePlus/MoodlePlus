@@ -4,6 +4,7 @@
 // filtering/labelling helpers live in src/utils/gradeCalculatorOptions.js.
 
 import { COURSE_DATA_KINDS, getCourseData, getCourseList } from '../../storage/courseCache.js';
+import { buildEmptyStateWithLinks } from './pageLinks.js';
 import { calculateCurrentGrade, calculateRequiredScore } from '../../utils/gradeCalculator.js';
 import {
   formatCategoryOptionLabel,
@@ -46,6 +47,14 @@ export async function initCalculatorView(root) {
 
   selectedCourseId = gradesByCourseId.keys().next().value ?? null;
 
+  const emptyHelp =
+    !loadError && gradesByCourseId.size === 0
+      ? await buildEmptyStateWithLinks(
+          "No grades loaded yet. Open a course's Grades page once — you can get to each one from here:",
+          ['gradesOverview'],
+        )
+      : null;
+
   render();
 
   function render() {
@@ -57,7 +66,7 @@ export async function initCalculatorView(root) {
     }
 
     if (gradesByCourseId.size === 0) {
-      root.appendChild(emptyState('Visit a WolfWare gradebook page to load your grades, then reopen the popup.'));
+      root.appendChild(emptyHelp);
       return;
     }
 

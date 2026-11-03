@@ -7,6 +7,7 @@ import { COURSE_DATA_KINDS, getCourseData, getCourseList, getParseStatus } from 
 import { getUserSettings, saveUserSettings } from '../../storage/userSettings.js';
 import { PAGE_TYPES } from '../../parsing/pageType.js';
 import { buildAgenda, formatDayLabel, withCourseNames } from '../../utils/calendarAgenda.js';
+import { buildEmptyStateWithLinks } from './pageLinks.js';
 
 const VIEW_MODES = [
   { mode: 'day', label: 'Day' },
@@ -48,6 +49,23 @@ export async function initCalendarView(root) {
     state = 'error';
   }
 
+  // Built once up front (it may need an async storage read for the Moodle address), so
+  // render() itself can stay synchronous when the view mode changes.
+  let emptyHelp = null;
+  if (state === 'no-courses') {
+    emptyHelp = await buildEmptyStateWithLinks("Moodle+ hasn't seen your courses yet. Open these once:", [
+      'upcomingEvents',
+      'gradesOverview',
+    ]);
+  } else if (state === 'no-assignments') {
+    emptyHelp = await buildEmptyStateWithLinks(
+      noAssignmentsReason
+        ? `Couldn't read the upcoming events page: ${noAssignmentsReason}`
+        : 'No due dates loaded yet. Open this once:',
+      ['upcomingEvents'],
+    );
+  }
+
   render();
 
   function render() {
@@ -59,22 +77,16 @@ export async function initCalendarView(root) {
     }
 
     if (state === 'no-courses') {
-      root.appendChild(emptyState('Visit WolfWare to load your courses, then reopen the popup.'));
+      root.appendChild(emptyHelp);
       return;
     }
 
     if (isStale) {
-      root.appendChild(banner('warning', 'Showing cached data — visit a WolfWare page to refresh it.'));
+      root.appendChild(banner('warning', 'Showing saved data — open Upcoming events again to refresh it.'));
     }
 
     if (state === 'no-assignments') {
-      root.appendChild(
-        emptyState(
-          noAssignmentsReason
-            ? `Couldn't read the upcoming events page: ${noAssignmentsReason}`
-            : 'Visit the WolfWare calendar page to load upcoming assignments.',
-        ),
-      );
+      root.appendChild(emptyHelp);
       return;
     }
 

@@ -138,6 +138,31 @@ body {
   padding: 12px 0;
 }
 
+.empty-state p {
+  margin: 0 0 8px;
+}
+
+.page-links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.page-links li {
+  margin-bottom: 6px;
+}
+
+.page-links a {
+  color: var(--accent);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.page-links a:hover,
+.page-links a:focus-visible {
+  text-decoration: underline;
+}
+
 .field {
   margin-bottom: 10px;
 }
