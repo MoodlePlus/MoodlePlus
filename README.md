@@ -7,7 +7,7 @@ Moodle+ is a Chrome/Firefox browser extension (Manifest V3) that enhances NCSU's
 - Dark mode
 - A responsive mobile overlay
 
-> Status: early scaffolding — most features are stubbed out and not yet implemented.
+> Status: all four MVP features work: the calendar, grade calculator, dark mode, and the on-page overlay. It's being tested on the live WolfWare site ahead of the demo.
 
 ## Prerequisites
 
@@ -62,7 +62,8 @@ To test a one-off (non-watch) build against the local Moodle instance, use `npm 
 1. Run `npm run build` (or `npm run dev` for a watch build).
 2. Go to `chrome://extensions`.
 3. Enable **Developer mode** (top right toggle).
-4. Click **Load unpacked** and select the `dist/` folder.
+4. Click **Load unpacked** and select the `dist/` folder **inside** the repo. Selecting the repo folder itself loads the raw source, which can't run, and the popup comes up blank.
+5. After each rebuild, click the reload icon on the Moodle+ card.
 
 ### Firefox (temporary install)
 
@@ -89,38 +90,40 @@ npm run test
 
 ## Configuration notes
 
-- The content script match pattern in [`manifest.json`](manifest.json) is `*://*.wolfware.ncsu.edu/*`, which covers `wolfware.ncsu.edu` and all of its subdomains. Narrow it once the exact course-site hostnames are confirmed.
+- The content script match pattern in [`manifest.json`](manifest.json) is `*://*.wolfware.ncsu.edu/*`, which covers `wolfware.ncsu.edu` and all of its subdomains. It's deliberately broad: the Moodle course site's hostname changes every few academic years (currently `moodle-courses2527.wolfware.ncsu.edu`), and the content script checks for itself whether a page is Moodle before reading it.
 - The local Moodle match (`http://localhost:8000/*`) is added by [`vite.config.js`](vite.config.js) for dev and `:localhost` builds only, so it never ends up in a production build.
 
 ## Project structure
 
 ```
 MoodlePlus/
-├── manifest.json              # Manifest V3 (with {{chrome}}/{{firefox}} keys)
-├── vite.config.js             # Vite + vite-plugin-web-extension config
+├── manifest.json                 # Manifest V3 (with {{chrome}}/{{firefox}} keys)
+├── vite.config.js                # Vite + vite-plugin-web-extension (Chrome/Firefox, localhost mode)
 ├── src/
 │   ├── background/
-│   │   └── service-worker.js     # Background script (service worker in Chrome) (stub)
-│   ├── content-scripts/
-│   │   └── main.js               # The only content script: detects the page, parses, caches
+│   │   └── service-worker.js     # Background script (minimal: everything syncs through storage)
+│   ├── content-scripts/          # Run on WolfWare pages
+│   │   ├── main.js               # Detects the page, runs its parser, saves the result
+│   │   ├── overlay.js            # The on-page M+ button and panel (Shadow DOM)
+│   │   └── pageDarkMode.js       # Dark mode for the WolfWare page itself
 │   ├── parsing/                  # Pure DOM parsers (see docs/parsing-guide.md)
-│   │   ├── pageType.js           # Which Moodle page is this?
+│   │   ├── pageType.js           # Which Moodle page is this? Which course?
 │   │   ├── dom.js, numbers.js, result.js
 │   │   └── parsers/              # userReport.js, gradesOverview.js, calendarUpcoming.js
-│   ├── popup/
-│   │   ├── popup.html            # Popup with dark mode toggle
-│   │   ├── popup.js
-│   │   └── popup.css
+│   ├── popup/                    # The toolbar popup
+│   │   ├── popup.html / .js / .css
+│   │   └── views/                # Calendar and Grade Calculator tabs (also used by the overlay)
+│   ├── ui/                       # Tab and dark mode switch wiring shared by popup and overlay
 │   ├── storage/
 │   │   ├── index.js              # browser.storage wrapper (all storage goes through here)
-│   │   ├── courseCache.js        # Scraped data, keyed by course, with timestamps
-│   │   ├── userSettings.js       # Persisted user preferences
-│   │   └── userSettings.test.js
-│   └── utils/
-│       ├── gradeCalculator.js    # Weighted grade + required-final-score logic
-│       └── gradeCalculator.test.js
+│   │   ├── courseCache.js        # Parsed data and entered weights, keyed by course
+│   │   └── userSettings.js       # Persisted preferences (dark mode, calendar view)
+│   └── utils/                    # Pure logic, unit-tested without a browser
+│       ├── gradeCalculator.js    # Current grade + "what do I need" solver
+│       ├── gradeCalculatorOptions.js
+│       ├── calendarAgenda.js     # Groups due dates for the calendar view
+│       └── darkPalette.js        # Color remapping for page dark mode
 ├── tests/
-│   ├── smoke.test.js
 │   ├── fixtures/                 # Saved Moodle pages for parser tests
 │   ├── helpers/                  # Test helpers (loading fixtures as DOM documents)
 │   └── moodle-env/               # Local Docker Moodle instance (see its README)
@@ -133,6 +136,8 @@ MoodlePlus/
 ├── LICENSE
 └── CONTRIBUTING.md
 ```
+
+Unit tests sit next to the code they test (`*.test.js`).
 
 ## Tooling notes
 

@@ -1,8 +1,20 @@
+// The grade calculator's math (FR-5, FR-6): a course's current weighted grade, and the
+// score a student needs on what's left to reach a target grade (Design doc 3.3).
+//
+// Pure functions over plain data, no DOM or storage: categories come from the gradebook
+// parser (src/parsing/parsers/userReport.js), with any weights the student entered already
+// applied, and every rule here is covered by gradeCalculator.test.js.
+//
+// The one rule everything rests on: an ungraded item (scorePercent null) is never counted
+// as a zero. A category with nothing graded yet is left out of the calculation, and
+// calculateRequiredScore reports it in pendingCategoryIds so the UI can say so.
+
 /**
  * @typedef {Object} GradeItem
  * @property {string} id
  * @property {string} name
  * @property {number|null} scorePercent null represents an unentered/pending grade (never treated as 0)
+ * @property {boolean} [isEstimated] true if the grade was a bare letter, estimated by the parser
  * @property {boolean} [isTargetAssessment] true if this is the target assessment (e.g. Final Exam)
  */
 
@@ -10,7 +22,7 @@
  * @typedef {Object} GradeCategory
  * @property {string} categoryId
  * @property {string} name
- * @property {number} weightPercent e.g. 20 for 20%
+ * @property {number|null} weightPercent e.g. 20 for 20%; null if neither the gradebook nor the student gave one
  * @property {number} [dropLowestCount] number of lowest scores to drop
  * @property {GradeItem[]} items
  */

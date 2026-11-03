@@ -1,7 +1,8 @@
 # Parsing guide
 
-How the parsing layer is set up, what's already done, and what to build next, in order.
-Read the "Parsing Strategy" and "Data Model" sections of the Design doc (3.1, 3.2) alongside this.
+How Moodle+ reads WolfWare pages: where everything lives, what each parser reads, and how to
+fix a parser when a real page breaks it. Read the "Parsing Strategy" and "Data Model" sections
+of the Design doc (3.1, 3.2) alongside this.
 
 ## How it fits together
 
@@ -9,7 +10,7 @@ Read the "Parsing Strategy" and "Data Model" sections of the Design doc (3.1, 3.
 WolfWare page
    │
    ▼
-src/content-scripts/main.js      the only content script; runs on every WolfWare page
+src/content-scripts/main.js      the only parsing content script; runs on every WolfWare page
    │  detectPage()               which page is this? (src/parsing/pageType.js)
    │  parseXxx(document)         the matching parser (src/parsing/parsers/)
    ▼
@@ -25,34 +26,39 @@ popup / overlay UI               reads from storage, never from the page
 does that. This means you can test a parser in Vitest with a saved HTML page, without
 loading the extension.
 
-## What's already done
+## What's where
 
-| File | Status |
+| File | What it does |
 |---|---|
-| [`src/parsing/dom.js`](../src/parsing/dom.js) | Done. `queryFirst` (try selectors in order), `cleanText`, `numberParamFromUrl` |
-| [`src/parsing/numbers.js`](../src/parsing/numbers.js) | Done. `parseGrade("-")` → `null`, `parseGrade("0.00")` → `0`, `parsePercent`, `parseRange` |
-| [`src/parsing/pageType.js`](../src/parsing/pageType.js) | Done. Detects the page from Moodle's `<body id="page-…">` and reads the course id |
-| [`src/parsing/parsers/userReport.js`](../src/parsing/parsers/userReport.js) | Done. Checked against real pages for all 3 students (task 1) |
-| [`src/parsing/parsers/gradesOverview.js`](../src/parsing/parsers/gradesOverview.js) | Done. Checked against the real page (task 2) |
-| [`src/parsing/parsers/calendarUpcoming.js`](../src/parsing/parsers/calendarUpcoming.js) | Done. Checked against the real page (task 3) |
-| [`src/content-scripts/main.js`](../src/content-scripts/main.js) | Done. Already wired to all three parsers and storage |
-| [`src/storage/courseCache.js`](../src/storage/courseCache.js) | Done. `saveCourseData`, `saveCourseList`, `saveParseStatus` |
-| [`scripts/capture-fixtures.mjs`](../scripts/capture-fixtures.mjs) | Done. Saves real pages from the local Moodle for tests |
+| [`src/parsing/dom.js`](../src/parsing/dom.js) | `queryFirst` (try selectors in order), `cleanText`, `numberParamFromUrl` |
+| [`src/parsing/numbers.js`](../src/parsing/numbers.js) | Grade text → numbers: `parseGrade("-")` → `null`, `parseGrade("0.00")` → `0`, `percentInText("C- (70.00 %)")` → `70`, `letterGradeFloor("A+")` → `97` |
+| [`src/parsing/pageType.js`](../src/parsing/pageType.js) | Which page this is (from `<body id="page-…">`), the course id and name, and whether it's a Moodle page at all |
+| [`src/parsing/parsers/userReport.js`](../src/parsing/parsers/userReport.js) | One course's gradebook → grade categories for the calculator (FR-4) |
+| [`src/parsing/parsers/gradesOverview.js`](../src/parsing/parsers/gradesOverview.js) | Grades overview → the student's course list (FR-1) |
+| [`src/parsing/parsers/calendarUpcoming.js`](../src/parsing/parsers/calendarUpcoming.js) | Upcoming events → due dates for the calendar (FR-2) |
+| [`src/content-scripts/main.js`](../src/content-scripts/main.js) | Runs the right parser on each page and saves the result |
+| [`src/storage/courseCache.js`](../src/storage/courseCache.js) | Where parsed data is stored, plus weights the student entered |
+| [`scripts/capture-fixtures.mjs`](../scripts/capture-fixtures.mjs) | Saves real pages from the local Moodle as test fixtures |
 
-The user report parser was originally written against a **hand-written** copy of the page
-([`tests/fixtures/handmade/user-report.html`](../tests/fixtures/handmade/user-report.html)),
-because the real site wasn't available when it was written; that fixture is kept as a fast,
-deterministic test that doesn't need the local Moodle running. All three parsers now also have
-passing tests against real captured pages for student1-3 (`describe.skipIf` blocks, gated on
-`tests/fixtures/moodle/` existing).
+Tests sit next to each file (`*.test.js`). Each parser is tested against:
 
-## Next: popup UI
+- **hand-written pages** in `tests/fixtures/handmade/`: fast, and always available.
+  `user-report-nested-letters.html` copies the shape of a real NC State course (anonymised).
+- **real captured pages** for student1–3 in `tests/fixtures/moodle/`: skipped with
+  `describe.skipIf` until those exist.
 
-The parsing layer feeds a popup UI built on top of it (calendar + grade calculator tabs,
-`src/popup/views/`), reading only from `courseCache`/`userSettings` - never from the page
-directly. See `src/popup/views/calendarView.js` and `calculatorView.js` for the pattern if you're
-adding another view, and `src/utils/calendarAgenda.js` / `gradeCalculatorOptions.js` for the pure
-logic behind them (both unit-tested with no DOM, same style as `gradeCalculator.js`).
+## What real WolfWare gradebooks do
+
+The local test course is tidy. Real courses aren't, and the user report parser handles all of
+these (see the tests in `userReport.test.js`):
+
+- **Nested categories** (e.g. Individual → Personal Contribution → Logs). Every grade item counts
+  toward its *top-level* category, because that's what a syllabus gives weights for.
+- **Hidden columns.** Instructors can hide "Calculated weight", "Range" and "Percentage". A
+  weight that can't be read stays `null`, and the student enters it in the calculator.
+- **Letter grades.** A percentage printed in the grade ("C- (70.00 %)") is used as-is. A bare
+  letter ("A+") is estimated at the bottom of NC State's range and flagged as estimated.
+- **Extra text in grade cells**, like a quiz's "Grade analysis" link next to the grade.
 
 ## Setup (about 15 minutes)
 
@@ -61,7 +67,7 @@ logic behind them (both unit-tested with no DOM, same style as `gradeCalculator.
    cd tests/moodle-env
    ./moodle.sh start
    ```
-2. Save the real pages as test fixtures. This logs in as student1-3 and writes
+2. Save the real pages as test fixtures. This logs in as student1–3 and writes
    `tests/fixtures/moodle/<student>/*.html`:
    ```bash
    npm run capture-fixtures
@@ -75,59 +81,31 @@ logic behind them (both unit-tested with no DOM, same style as `gradeCalculator.
    ```bash
    npm test
    ```
-4. See it in the browser: `npm run dev`, load `dist/` in Chrome (see the README), log in to
-   <http://localhost:8000> as `student1` / `student1` and open
+4. See it in the browser: `npm run build:localhost`, load `dist/` in Chrome (see the README),
+   log in to <http://localhost:8000> as `student1` / `student1` and open
    <http://localhost:8000/grade/report/user/index.php?id=2>. In DevTools → Console, pick the
    **Moodle+** context from the dropdown at the top (content scripts log there, not in the page's
    context). You should see `[Moodle+] Read userReport: 4 categories, current grade 86.65% …`.
 
-## Task 1: check the user report parser against the real page
+## When a parser breaks on a real page
 
-Goal: the three `parseUserReport (real page, studentN)` tests pass. They check the parser +
-grade calculator against Moodle's own numbers (`tests/moodle-env/README.md`, section 4).
-
-If they fail:
-
-1. Open `tests/fixtures/moodle/student1/user-report.html` in your browser and in your editor
-   side by side with `tests/fixtures/handmade/user-report.html`.
-2. Compare: the table's classes, the `levelN` classes on the item name cells, how a category
-   **total** row is marked (`baggb`/`baggt`?), and what the weight cell says for the dropped
-   Homework 2 and the extra credit survey. The spots most likely to need changes are marked
-   `TODO(verify)` in `userReport.js`.
-3. Fix the selector or rule, re-run `npm test`. When it passes, update the hand-written fixture
-   so it matches the real markup too.
-
-## Task 2: grades overview → list of courses (FR-1)
-
-Follow the numbered TODO in [`gradesOverview.js`](../src/parsing/parsers/gradesOverview.js) and
-turn the `it.todo` lines in `gradesOverview.test.js` into real tests.
-
-**Done when:** the tests pass against `tests/fixtures/moodle/student1/grades-overview.html`, and
-visiting <http://localhost:8000/grade/report/overview/index.php> with the extension loaded logs
-`[Moodle+] Read gradesOverview: 1 courses`.
-
-## Task 3: upcoming events → due dates (FR-2)
-
-Same again with [`calendarUpcoming.js`](../src/parsing/parsers/calendarUpcoming.js). `main.js`
-already groups the events by course and saves them.
-
-**Done when:** Homework 4, Quiz 3 and the Final Exam come back with correct due dates, read from
-timestamps rather than display text.
-
-## Later
-
-- Nested categories in the user report (search `TODO` in `userReport.js`).
-- Check against a real WolfWare page from your own account. Save it (Ctrl+S, "Webpage, HTML
-  only"), and **replace your name, student ID and grades** before committing it under
-  `tests/fixtures/wolfware/`. NC State's theme changes page chrome, but the grade tables use core
-  Moodle templates, so most selectors should carry over.
+1. Open the page, then DevTools → Console → **Moodle+** context. Every parser warning and
+   failure is logged there with a `[Moodle+]` prefix; it usually names the problem directly.
+2. Save the page (Ctrl+S, "Webpage, HTML only") and open it next to the closest hand-written
+   fixture. Compare the table's classes, the `levelN` classes on name cells, how total rows are
+   marked (`baggt`/`baggb`), and which columns exist.
+3. **Before saving it into the repo, replace your name, student ID and grades.** Better still,
+   copy just the structure into a new hand-written fixture, like
+   `user-report-nested-letters.html`.
+4. Write a failing test against it, fix the parser, and re-run `npm test` - the real-page tests
+   make sure the fix doesn't break the local course.
 
 ## Rules for every parser
 
 1. **Selectors, most stable first.** Use `queryFirst(doc, [...])` with `data-*` attributes first,
    then ids/classes, then structure. Never "the 3rd column": find cells by class.
 2. **An empty grade is `null`, never `0`.** Moodle shows `-` for "not entered yet".
-   `parseGrade` already handles this; don't bypass it.
+   `parseGrade` and `isEmptyGrade` already handle this; don't bypass them.
 3. **Fail loudly.** If something essential is missing, `return fail("Couldn't find …")`. Never
    return made-up or partial data as `ok`. Use `warnings` for things that look odd but don't break
    the result.

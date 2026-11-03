@@ -1,17 +1,16 @@
 // Parser for upcoming events: /calendar/view.php?view=upcoming (FR-2).
 //
 // Lists upcoming due dates across all of the student's courses, which is exactly what
-// the unified calendar needs. NOTE: this is Moodle's "upcoming" window (a near-term
-// lookahead, not "every future event") - on the example course, Homework 4 and the Quiz 3
-// close event show up here, but the Final Exam (60 days out) does not. That's a real limit
-// of this page, not a parser bug; a true "every assignment" view would need a different
-// source (e.g. each course's own calendar/assignment index) - out of scope for now.
+// the unified calendar needs. Note that this is Moodle's "upcoming" window, a near-term
+// lookahead rather than every future event: on the example course, Homework 4 and the
+// Quiz 3 close event show up here, but the Final Exam (60 days out) does not. That's a
+// limit of the page itself, not of the parser.
 //
 // Each event is a <div data-type="event" data-course-id="…" data-event-id="…" …>; the
 // course id and event id are read straight off those attributes (most stable: Design doc
 // 3.2 rule 1), rather than re-deriving them from links inside the card.
 //
-// Output shape (Design doc 3.1 "Assignment"; category/pointsPossible/status can come later):
+// Output shape (Design doc 3.1 "Assignment"):
 //   [{ assignmentId: "42", courseId: 2, courseName: "EX 101 ...", courseUrl: "http://...",
 //      title: "Homework 4 is due", dueDate: "2026-10-24T03:59:00.000Z", url: "http://..." }]
 

@@ -1,6 +1,6 @@
 // Grade calculator tab: lets the student pick a course, then a still-ungraded category,
 // and see what score they need in it to hit a target overall grade. DOM/storage glue
-// only - the math lives in src/utils/gradeCalculator.js (unchanged) and the pure
+// only - the math lives in src/utils/gradeCalculator.js and the pure
 // filtering/labelling helpers live in src/utils/gradeCalculatorOptions.js.
 //
 // Many real courses hide their category weights, so the student can type them in from the

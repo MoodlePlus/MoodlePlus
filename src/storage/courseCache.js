@@ -47,6 +47,7 @@ export async function saveCourseList(courses) {
   await set(COURSE_LIST_KEY, { data: courses, lastScrapedAt: Date.now() });
 }
 
+/** @returns {Promise<{ data: { courseId: number, courseName: string, url: string }[], lastScrapedAt: number, isStale: boolean } | null>} */
 export async function getCourseList() {
   return readEntry(COURSE_LIST_KEY);
 }
@@ -95,11 +96,15 @@ export async function saveWeightOverrides(courseId, overrides) {
   await set(weightsKey(courseId), overrides);
 }
 
-/** Where the student's Moodle lives, so the UI can link straight to the pages it reads. */
+/**
+ * Where the student's Moodle lives, so the UI can link straight to the pages it reads.
+ * @param {string} origin e.g. "https://moodle-courses2527.wolfware.ncsu.edu"
+ */
 export async function saveMoodleOrigin(origin) {
   await set(MOODLE_ORIGIN_KEY, origin);
 }
 
+/** @returns {Promise<string|null>} null until the student has visited a Moodle page */
 export async function getMoodleOrigin() {
   return (await get(MOODLE_ORIGIN_KEY))[MOODLE_ORIGIN_KEY] ?? null;
 }
@@ -114,6 +119,10 @@ export async function saveParseStatus(pageType, result) {
   await set(statusKey(pageType), { ok: result.ok, reason: result.reason ?? null, at: Date.now() });
 }
 
+/**
+ * @param {string} pageType one of PAGE_TYPES
+ * @returns {Promise<{ ok: boolean, reason: string|null, at: number } | null>} null if never parsed
+ */
 export async function getParseStatus(pageType) {
   const key = statusKey(pageType);
   return (await get(key))[key] ?? null;

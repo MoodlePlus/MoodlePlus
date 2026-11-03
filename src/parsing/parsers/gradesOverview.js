@@ -9,7 +9,7 @@
 // "emptyrow" rows that have no course link - we skip any row without one rather than
 // trying to special-case that class, so this also tolerates themes that drop the class.
 //
-// Output shape (Design doc 3.1 "Course"; term is optional for now):
+// Output shape (Design doc 3.1 "Course"):
 //   [{ courseId: 2, courseName: "EX 101 (001) FALL 2026: ...", url: "http://..." }]
 
 import { cleanText, numberParamFromUrl, queryFirst } from '../dom.js';

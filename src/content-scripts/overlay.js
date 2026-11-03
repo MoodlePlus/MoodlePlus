@@ -67,6 +67,7 @@ const OVERLAY_CSS = `
 }
 `;
 
+// Same structure as src/popup/popup.html - keep the two in sync.
 const PANEL_MARKUP = `
   <div id="app">
     <div id="topbar">
