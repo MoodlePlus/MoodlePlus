@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { htmlToDocument } from '../../tests/helpers/fixtures.js';
-import { detectPage, PAGE_TYPES } from './pageType.js';
+import { fixtureExists, htmlToDocument, loadFixture } from '../../tests/helpers/fixtures.js';
+import { detectCourseName, detectPage, isMoodlePage, PAGE_TYPES } from './pageType.js';
 
 const body = (id, className = '') => htmlToDocument(`<body id="${id}" class="${className}"></body>`);
 
@@ -33,4 +33,29 @@ describe('detectPage', () => {
     const page = detectPage(body('page-site-index', 'course-1'), 'http://localhost:8000/');
     expect(page).toEqual({ type: PAGE_TYPES.UNKNOWN, courseId: null });
   });
+});
+
+describe('isMoodlePage', () => {
+  it('is true when the body has a Moodle pagelayout class', () => {
+    expect(isMoodlePage(body('page-course-view-topics', 'pagelayout-course course-2'))).toBe(true);
+  });
+
+  it('is false on non-Moodle WolfWare pages like the course portal', () => {
+    expect(isMoodlePage(htmlToDocument('<body class="home"><h1>My Current Courses</h1></body>'))).toBe(false);
+  });
+});
+
+describe('detectCourseName', () => {
+  it('returns null when the page has no course header', () => {
+    expect(detectCourseName(htmlToDocument('<body><h1>Dashboard</h1></body>'))).toBeNull();
+  });
+
+  for (const page of ['course-page', 'user-report']) {
+    const fixture = `moodle/student1/${page}.html`;
+    it.skipIf(!fixtureExists(fixture))(`reads the course name from the real ${page}`, () => {
+      expect(detectCourseName(loadFixture(fixture))).toBe(
+        'EX 101 (001) FALL 2026: Example Course for Grade Extension Testing',
+      );
+    });
+  }
 });

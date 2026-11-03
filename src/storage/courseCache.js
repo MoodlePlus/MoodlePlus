@@ -15,6 +15,7 @@ export const COURSE_DATA_KINDS = Object.freeze({
 });
 
 const COURSE_LIST_KEY = 'courses';
+const MOODLE_ORIGIN_KEY = 'moodleOrigin';
 const courseKey = (courseId, kind) => `course.${courseId}.${kind}`;
 const statusKey = (pageType) => `parseStatus.${pageType}`;
 
@@ -36,13 +37,50 @@ export async function getCourseData(courseId, kind) {
   return readEntry(courseKey(courseId, kind));
 }
 
-/** @param {{ courseId: number, courseName: string, url: string }[]} courses */
+/**
+ * Replaces the whole course list. Only the grades overview should call this: it's the
+ * one page that lists every enrolled course, so it's authoritative.
+ * @param {{ courseId: number, courseName: string, url: string }[]} courses
+ */
 export async function saveCourseList(courses) {
   await set(COURSE_LIST_KEY, { data: courses, lastScrapedAt: Date.now() });
 }
 
 export async function getCourseList() {
   return readEntry(COURSE_LIST_KEY);
+}
+
+/**
+ * Adds courses seen on other pages (e.g. the calendar names each event's course) without
+ * dropping ones we already know, so the UI works before the grades overview is visited.
+ * Pure - see mergeIntoCourseList for the storage-backed version.
+ * @param {{ courseId: number, courseName: string, url: string }[]} existing
+ * @param {{ courseId: number, courseName?: string|null, url?: string|null }[]} incoming
+ */
+export function mergeCourseLists(existing, incoming) {
+  const byId = new Map(existing.map((course) => [course.courseId, course]));
+  for (const course of incoming) {
+    if (byId.has(course.courseId) || !course.courseName) continue;
+    byId.set(course.courseId, { courseId: course.courseId, courseName: course.courseName, url: course.url ?? null });
+  }
+  return [...byId.values()];
+}
+
+/** @param {{ courseId: number, courseName?: string|null, url?: string|null }[]} courses */
+export async function mergeIntoCourseList(courses) {
+  const current = await getCourseList();
+  const merged = mergeCourseLists(current?.data ?? [], courses);
+  if (merged.length === (current?.data.length ?? 0)) return; // nothing new - keep the old timestamp
+  await set(COURSE_LIST_KEY, { data: merged, lastScrapedAt: Date.now() });
+}
+
+/** Where the student's Moodle lives, so the UI can link straight to the pages it reads. */
+export async function saveMoodleOrigin(origin) {
+  await set(MOODLE_ORIGIN_KEY, origin);
+}
+
+export async function getMoodleOrigin() {
+  return (await get(MOODLE_ORIGIN_KEY))[MOODLE_ORIGIN_KEY] ?? null;
 }
 
 /**

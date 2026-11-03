@@ -4,7 +4,7 @@
 // Parsers live in src/parsing/parsers/ and are pure functions (Document in, data out), so
 // they can be unit-tested without a browser. Everything browser-specific stays in here.
 
-import { detectPage, PAGE_TYPES } from '../parsing/pageType.js';
+import { detectCourseName, detectPage, isMoodlePage, PAGE_TYPES } from '../parsing/pageType.js';
 import { calculateCurrentGrade } from '../utils/gradeCalculator.js';
 import { parseCalendarUpcoming } from '../parsing/parsers/calendarUpcoming.js';
 import { parseGradesOverview } from '../parsing/parsers/gradesOverview.js';
@@ -12,8 +12,10 @@ import { parseUserReport } from '../parsing/parsers/userReport.js';
 import { fail } from '../parsing/result.js';
 import {
   COURSE_DATA_KINDS,
+  mergeIntoCourseList,
   saveCourseData,
   saveCourseList,
+  saveMoodleOrigin,
   saveParseStatus,
 } from '../storage/courseCache.js';
 
@@ -40,13 +42,35 @@ const HANDLERS = {
       for (const [courseId, courseEvents] of byCourse) {
         await saveCourseData(courseId, COURSE_DATA_KINDS.ASSIGNMENTS, courseEvents);
       }
+      await mergeIntoCourseList(
+        events.map((event) => ({ courseId: event.courseId, courseName: event.courseName, url: event.courseUrl })),
+      );
     },
     describe: (events) => `${events.length} upcoming events`,
   },
 };
 
+/**
+ * Things worth remembering from any Moodle page, whatever its type: where Moodle lives
+ * (so the UI can link to the pages it reads) and, inside a course, that course's name -
+ * so the course list fills in as the student browses, not only from the grades overview.
+ */
+async function rememberContext(page) {
+  if (!isMoodlePage(document)) return;
+  await saveMoodleOrigin(location.origin);
+
+  const courseName = page.courseId === null ? null : detectCourseName(document);
+  if (courseName) {
+    await mergeIntoCourseList([
+      { courseId: page.courseId, courseName, url: `${location.origin}/course/view.php?id=${page.courseId}` },
+    ]);
+  }
+}
+
 async function run() {
   const page = detectPage(document, location.href);
+  await rememberContext(page);
+
   const handler = HANDLERS[page.type];
   if (!handler) return;
 

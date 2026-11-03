@@ -48,6 +48,27 @@ export function detectPage(doc, url) {
 }
 
 /**
+ * True on Moodle pages, false elsewhere on *.wolfware.ncsu.edu (e.g. the WolfWare course
+ * portal, which isn't Moodle). Moodle stamps every page's <body> with a "pagelayout-*" class.
+ * @param {Document} doc
+ */
+export function isMoodlePage(doc) {
+  return [...(doc.body?.classList ?? [])].some((name) => name.startsWith('pagelayout-'));
+}
+
+/**
+ * The current course's full name from the page header, on any page inside a course
+ * (course page, gradebook, ...), or null if this page doesn't show one.
+ * @param {Document} doc
+ * @returns {string|null}
+ */
+export function detectCourseName(doc) {
+  const heading = doc.querySelector('.page-header-headings h1, #page-header h1');
+  const name = heading?.textContent.replace(/\s+/g, ' ').trim();
+  return name || null;
+}
+
+/**
  * @param {Document} doc
  * @param {URL} parsedUrl
  * @returns {number|null}
