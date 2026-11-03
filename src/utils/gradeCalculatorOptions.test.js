@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { getSolvableCategories, formatCategoryOptionLabel, resolvePendingCategoryNames } from './gradeCalculatorOptions.js';
+import {
+  applyWeightOverrides,
+  formatCategoryOptionLabel,
+  getSolvableCategories,
+  resolvePendingCategoryNames,
+  summarizeWeights,
+} from './gradeCalculatorOptions.js';
 
 const category = (overrides) => ({
   categoryId: 'cat',
@@ -59,5 +65,38 @@ describe('resolvePendingCategoryNames', () => {
 
   it('returns [] for no pending ids', () => {
     expect(resolvePendingCategoryNames(categories, [])).toEqual([]);
+  });
+});
+
+describe('applyWeightOverrides', () => {
+  const categories = [
+    category({ categoryId: 'ind', name: 'Individual', weightPercent: null }),
+    category({ categoryId: 'team', name: 'Team', weightPercent: 30 }),
+  ];
+
+  it('fills in a weight the gradebook hid', () => {
+    expect(applyWeightOverrides(categories, { ind: 70 })[0].weightPercent).toBe(70);
+  });
+
+  it('also replaces a scraped weight the student corrected', () => {
+    expect(applyWeightOverrides(categories, { team: 25 })[1].weightPercent).toBe(25);
+  });
+
+  it('ignores missing or non-numeric overrides and does not mutate its input', () => {
+    const result = applyWeightOverrides(categories, { ind: NaN, team: undefined });
+    expect(result.map((c) => c.weightPercent)).toEqual([null, 30]);
+    expect(categories[0].weightPercent).toBeNull();
+  });
+});
+
+describe('summarizeWeights', () => {
+  it('lists categories still missing a weight and sums the known ones', () => {
+    const summary = summarizeWeights([
+      category({ name: 'Individual', weightPercent: null }),
+      category({ name: 'Team', weightPercent: 30 }),
+      category({ name: 'Quizzes', weightPercent: 12.5 }),
+    ]);
+    expect(summary.missing.map((c) => c.name)).toEqual(['Individual']);
+    expect(summary.total).toBe(42.5);
   });
 });

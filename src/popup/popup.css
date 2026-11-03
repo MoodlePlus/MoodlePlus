@@ -286,7 +286,64 @@ body {
 .current-grade {
   font-size: 1.4rem;
   font-weight: 600;
-  margin: 2px 0 12px;
+  margin: 2px 0 2px;
+}
+
+.current-grade-source {
+  font-size: 0.75rem;
+  color: var(--muted-text);
+  margin-bottom: 12px;
+}
+
+.estimate-note {
+  font-size: 0.75rem;
+  color: var(--muted-text);
+  margin: 0 0 10px;
+}
+
+.weights {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+}
+
+.weights summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.weights-hint {
+  color: var(--muted-text);
+  font-size: 0.75rem;
+  margin: 6px 0 8px;
+}
+
+.weight-row {
+  display: grid;
+  grid-template-columns: 1fr 64px auto;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.weight-row input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 6px;
+  font: inherit;
+  background: var(--input-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.weights-total {
+  font-size: 0.8rem;
+  color: var(--muted-text);
+  text-align: right;
 }
 
 .result-panel {

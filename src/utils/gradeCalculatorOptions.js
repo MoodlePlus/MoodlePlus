@@ -26,6 +26,32 @@ export function formatCategoryOptionLabel(category) {
 }
 
 /**
+ * Applies weights the student entered over the ones read from the gradebook. Any valid
+ * number wins (to fix a wrong scraped weight too); anything else keeps the scraped value.
+ * Does not mutate its input.
+ * @param {GradeCategory[]} categories
+ * @param {Record<string, number>} overrides by categoryId
+ * @returns {GradeCategory[]}
+ */
+export function applyWeightOverrides(categories, overrides) {
+  return categories.map((category) => {
+    const override = overrides[category.categoryId];
+    return Number.isFinite(override) ? { ...category, weightPercent: override } : category;
+  });
+}
+
+/**
+ * @param {GradeCategory[]} categories
+ * @returns {{ missing: GradeCategory[], total: number }} categories with no weight yet, and
+ *   the sum of the weights that are known
+ */
+export function summarizeWeights(categories) {
+  const missing = categories.filter((category) => category.weightPercent === null);
+  const total = categories.reduce((sum, category) => sum + (category.weightPercent ?? 0), 0);
+  return { missing, total: Math.round(total * 100) / 100 };
+}
+
+/**
  * Maps calculateRequiredScore's pendingCategoryIds (categories left out of the
  * calculation because nothing in them is graded yet) back to display names, so the UI
  * can say *which* categories weren't counted instead of just "something was excluded".

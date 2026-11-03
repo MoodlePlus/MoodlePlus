@@ -8,6 +8,16 @@
 //   - the course total   ("Course total")
 // Nesting is given by a "levelN" class on each row's name cell (level1 = the course).
 //
+// Real courses vary a lot, and the parser has to cope with all of these (seen on NC State's
+// WolfWare, not just the local test course):
+//   - Nested categories (Individual > Personal Contribution > Logs). The calculator works in
+//     top-level categories - the ones a syllabus gives weights for - so every grade item is
+//     counted in its top-level category, however deep it sits.
+//   - Hidden columns. Instructors can hide "Calculated weight", "Range" and "Percentage";
+//     a weight we can't read stays null for the student to enter (Design doc 3.3).
+//   - Grades shown as letters ("A+") or "letter (percentage)" ("C- (70.00 %)"). A printed
+//     percentage is used as-is; a letter on its own is estimated (see numbers.js).
+//
 // Columns are found by class (.column-grade etc.), never by position: site admins can
 // hide columns, which shifts positions around.
 //
@@ -15,7 +25,7 @@
 // so the result can be passed straight to calculateCurrentGrade / calculateRequiredScore.
 
 import { cleanText, numberParamFromUrl, queryFirst } from '../dom.js';
-import { parseGrade, parsePercent, parseRange } from '../numbers.js';
+import { isEmptyGrade, letterGradeFloor, parseGrade, parsePercent, parseRange, percentInText } from '../numbers.js';
 import { fail, ok } from '../result.js';
 
 const TABLE_SELECTORS = ['table.user-grade', 'table[id^="user-grade"]', '#region-main table.generaltable'];
@@ -29,6 +39,7 @@ const TABLE_SELECTORS = ['table.user-grade', 'table[id^="user-grade"]', '#region
  * @property {GradeCategory[]} categories
  * @property {{ id: string, name: string, scorePercent: number|null }[]} extraCreditItems
  *   not in `categories` yet: the calculator doesn't support extra credit
+ * @property {boolean} hasEstimatedGrades true if any grade was a bare letter we had to estimate
  */
 
 /**
@@ -66,15 +77,18 @@ export function parseUserReport(doc, { courseId = null } = {}) {
     const parent = stack.at(-1);
 
     if (!gradeCell) {
-      // Category header.
+      // Category header. `top` is the top-level category it belongs to (itself, for a
+      // top-level one); the course row has none.
+      const isCourse = stack.length === 0;
       const category = {
         categoryId: categoryIdOf(nameCell, name),
         name,
         level,
-        isCourse: stack.length === 0,
+        isCourse,
         weightPercent: null,
         items: [],
       };
+      category.top = isCourse ? null : parent.isCourse ? category : parent.top;
       stack.push(category);
       allCategories.push(category);
       continue;
@@ -85,9 +99,14 @@ export function parseUserReport(doc, { courseId = null } = {}) {
     if (isTotal) {
       if (parent.isCourse) {
         // Use Moodle's percentage, not grade / range: the range shows the course's full
-        // maximum, but Moodle leaves ungraded items out of the percentage.
-        courseTotalPercent = parsePercent(cleanText(row.querySelector('.column-percentage')));
-      } else {
+        // maximum, but Moodle leaves ungraded items out of the percentage. Without a
+        // percentage column, Moodle may still print one in the grade: "C- (70.00 %)".
+        courseTotalPercent =
+          parsePercent(cleanText(row.querySelector('.column-percentage'))) ??
+          percentInText(cleanText(gradeCell));
+      } else if (parent.top === parent) {
+        // Only a top-level category's weight is a share of the course. A nested category's
+        // weight is relative to its parent, so it isn't a weight the calculator can use.
         parent.weightPercent = parsePercent(cleanText(row.querySelector('.column-weight')));
       }
       continue;
@@ -95,7 +114,13 @@ export function parseUserReport(doc, { courseId = null } = {}) {
 
     const item = parseItemRow(row, nameCell, name);
     if (!item.ok) return item;
-    parent.items.push(item.data);
+    if (item.data === null) {
+      warnings.push(...item.warnings);
+      continue;
+    }
+    // Course-level items stay on the course; anything inside a category counts toward its
+    // top-level category, however deeply nested.
+    (parent.isCourse ? parent : parent.top).items.push(item.data);
   }
 
   if (allCategories.length === 0) return fail("Couldn't find any grade categories in the table.");
@@ -112,22 +137,44 @@ export function parseUserReport(doc, { courseId = null } = {}) {
     warnings.push(`Category weights add up to ${weightSum}%, not 100%.`);
   }
 
-  return ok({ courseId, courseTotalPercent, categories, extraCreditItems }, warnings);
+  const hasEstimatedGrades = categories.some((category) => category.items.some((item) => item.isEstimated));
+  if (hasEstimatedGrades) {
+    warnings.push("Some grades are shown only as letters; they're estimated at the bottom of each letter's range.");
+  }
+
+  return ok({ courseId, courseTotalPercent, categories, extraCreditItems, hasEstimatedGrades }, warnings);
 }
 
-/** Reads one grade-item row. */
+/**
+ * Reads one grade-item row. Returns ok(null, warnings) for an item whose grade can't be
+ * turned into a percentage at all (e.g. a "Satisfactory" scale): it's left out and the
+ * student is told, rather than it silently looking "not graded yet".
+ */
 function parseItemRow(row, nameCell, name) {
   const gradeText = cleanText(row.querySelector('.column-grade'));
   const weightCell = row.querySelector('.column-weight');
   const weightText = cleanText(weightCell);
-  const grade = parseGrade(gradeText);
 
   let scorePercent = null;
-  if (grade !== null) {
-    scorePercent = scorePercentOf(row);
-    if (scorePercent === null) {
-      // A grade we can't turn into a percentage must not quietly become "not graded yet".
-      return fail(`Couldn't work out a percentage for "${name}" (grade "${gradeText}").`);
+  let isEstimated = false;
+  if (!isEmptyGrade(gradeText)) {
+    if (parseGrade(gradeText) !== null) {
+      // A number: needs a range or percentage to mean anything.
+      scorePercent = scorePercentOf(row) ?? percentInText(gradeText);
+      if (scorePercent === null) {
+        // A grade we can't turn into a percentage must not quietly become "not graded yet".
+        return fail(`Couldn't work out a percentage for "${name}" (grade "${gradeText}").`);
+      }
+    } else {
+      // Not a number: "B+ (88.00 %)", a bare letter "A+", or a scale word like "Complete".
+      scorePercent = percentInText(gradeText);
+      if (scorePercent === null) {
+        scorePercent = letterGradeFloor(gradeText);
+        isEstimated = scorePercent !== null;
+      }
+      if (scorePercent === null) {
+        return ok(null, [`Couldn't turn the grade "${gradeText}" for "${name}" into a percentage; it's left out.`]);
+      }
     }
   }
 
@@ -137,12 +184,13 @@ function parseItemRow(row, nameCell, name) {
   const isDropped =
     row.querySelector('.dropped') !== null ||
     /dropped/i.test(weightText) ||
-    (grade !== null && weightPercent === 0);
+    (scorePercent !== null && weightPercent === 0);
 
   return ok({
     id: String(numberParamFromUrl(link?.getAttribute('href'), 'id') ?? (nameCell.id || name)),
     name,
     scorePercent,
+    isEstimated,
     maxScore: parseRange(cleanText(row.querySelector('.column-range')))?.max ?? null,
     weightPercent,
     isDropped,
@@ -165,15 +213,22 @@ function scorePercentOf(row) {
 
 /**
  * Flattens the parsed tree into calculator categories:
- *   - each top-level category keeps its own items
+ *   - each top-level category, holding every grade item nested anywhere inside it
  *   - each grade item that sits directly in the course becomes its own category
  *     (e.g. "Participation", 15%), weighted by its own weight cell
+ * Nested categories don't become calculator categories of their own.
  */
 function toCalculatorCategories(allCategories, warnings) {
   const categories = [];
   const extraCreditItems = [];
 
-  const toItem = ({ id, name, scorePercent, maxScore }) => ({ id, name, scorePercent, maxScore });
+  const toItem = ({ id, name, scorePercent, maxScore, isEstimated }) => ({
+    id,
+    name,
+    scorePercent,
+    maxScore,
+    isEstimated,
+  });
   const keepItem = (item) => {
     if (!item.isExtraCredit) return true;
     extraCreditItems.push({ id: item.id, name: item.name, scorePercent: item.scorePercent });
@@ -196,11 +251,8 @@ function toCalculatorCategories(allCategories, warnings) {
       continue;
     }
 
-    if (category.level > 2) {
-      // TODO: support nested categories (a category inside a category). Their total row's
-      // weight is relative to the parent category, not the course.
-      warnings.push(`"${category.name}" is a nested category; nested categories aren't supported yet.`);
-    }
+    // A nested category's items were already counted in its top-level category.
+    if (category.top !== category) continue;
 
     const items = category.items.filter(keepItem);
     categories.push({

@@ -53,6 +53,70 @@ describe('parseUserReport (hand-written fixture)', () => {
   });
 });
 
+describe('parseUserReport (nested categories, letter grades, hidden weights)', () => {
+  // Shaped like a real NC State course (anonymised): see the fixture's header comment.
+  const result = parseUserReport(loadFixture('handmade/user-report-nested-letters.html'), { courseId: 7 });
+  const byName = (name) => result.data.categories.find((category) => category.name === name);
+
+  it('parses instead of failing', () => {
+    expect(result.ok).toBe(true);
+  });
+
+  it('only top-level categories become calculator categories', () => {
+    expect(result.data.categories.map((c) => c.name)).toEqual(['Individual', 'Team']);
+  });
+
+  it('counts items nested at any depth in their top-level category', () => {
+    expect(byName('Individual').items.map((item) => item.name)).toEqual([
+      'Progress Report',
+      'Journal 1',
+      'Journal 2',
+      'Module 1',
+      'Module 2',
+      'Module 3',
+    ]);
+    expect(byName('Team').items.map((item) => item.name)).toEqual(['Design Document', 'Final Report']);
+  });
+
+  it('estimates letter-only grades and flags them, but uses a printed percentage as-is', () => {
+    const items = Object.fromEntries(byName('Individual').items.map((item) => [item.name, item]));
+    expect(items['Module 1']).toMatchObject({ scorePercent: 93, isEstimated: true });
+    expect(items['Module 2']).toMatchObject({ scorePercent: 90, isEstimated: true });
+    expect(items['Module 3']).toMatchObject({ scorePercent: 88, isEstimated: false });
+    expect(items['Journal 1'].scorePercent).toBeNull();
+    expect(result.data.hasEstimatedGrades).toBe(true);
+  });
+
+  it("leaves hidden weights null for the student to enter, ignoring nested categories' relative weights", () => {
+    expect(byName('Individual').weightPercent).toBeNull();
+    expect(byName('Team').weightPercent).toBeNull();
+    expect(result.warnings).toContain('Couldn\'t read the weight of "Individual"; the user will need to enter it.');
+  });
+
+  it('reads the course total from a "letter (percentage)" grade', () => {
+    expect(result.data.courseTotalPercent).toBe(75);
+  });
+
+  it('no longer warns that nested categories are unsupported', () => {
+    expect(result.warnings.some((warning) => /nested/.test(warning))).toBe(false);
+  });
+
+  it('leaves out (with a warning) a grade that is neither a number nor a letter', () => {
+    const scaled = parseUserReport(
+      htmlToDocument(`
+        <table class="user-grade"><tbody>
+          <tr><th class="level1 column-itemname">Course</th></tr>
+          <tr><th class="level2 column-itemname">Labs</th></tr>
+          <tr><th class="level3 column-itemname">Lab 1</th><td class="column-grade">Satisfactory</td></tr>
+          <tr><th class="level3 column-itemname">Lab 2</th><td class="column-grade">B</td></tr>
+        </tbody></table>`),
+    );
+    expect(scaled.ok).toBe(true);
+    expect(scaled.data.categories[0].items.map((item) => item.name)).toEqual(['Lab 2']);
+    expect(scaled.warnings.some((warning) => warning.includes('Satisfactory'))).toBe(true);
+  });
+});
+
 describe('parseUserReport failures', () => {
   it('fails when there is no grade table', () => {
     const result = parseUserReport(htmlToDocument('<body><p>Nothing here</p></body>'));
