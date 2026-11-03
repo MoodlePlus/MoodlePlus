@@ -17,6 +17,7 @@ export const COURSE_DATA_KINDS = Object.freeze({
 const COURSE_LIST_KEY = 'courses';
 const MOODLE_ORIGIN_KEY = 'moodleOrigin';
 const courseKey = (courseId, kind) => `course.${courseId}.${kind}`;
+const weightsKey = (courseId) => `course.${courseId}.weightOverrides`;
 const statusKey = (pageType) => `parseStatus.${pageType}`;
 
 /**
@@ -72,6 +73,26 @@ export async function mergeIntoCourseList(courses) {
   const merged = mergeCourseLists(current?.data ?? [], courses);
   if (merged.length === (current?.data.length ?? 0)) return; // nothing new - keep the old timestamp
   await set(COURSE_LIST_KEY, { data: merged, lastScrapedAt: Date.now() });
+}
+
+/**
+ * Category weights the student typed in (from their syllabus) for a course, keyed by
+ * categoryId - for weights the gradebook hides or gets wrong (Design doc 3.3: never rely on
+ * scraped data alone). Kept apart from the scraped grades so a re-scrape never wipes them.
+ * @param {number} courseId
+ * @returns {Promise<Record<string, number>>}
+ */
+export async function getWeightOverrides(courseId) {
+  const key = weightsKey(courseId);
+  return (await get(key))[key] ?? {};
+}
+
+/**
+ * @param {number} courseId
+ * @param {Record<string, number>} overrides
+ */
+export async function saveWeightOverrides(courseId, overrides) {
+  await set(weightsKey(courseId), overrides);
 }
 
 /** Where the student's Moodle lives, so the UI can link straight to the pages it reads. */
